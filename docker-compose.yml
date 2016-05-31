@@ -1,0 +1,61 @@
+version: '2'
+services:
+  zookeeper:
+    image: ezioruan/goim:v2
+    working_dir: /data/apps/kafka
+    volumes:
+     - ./config:/data/config
+    command: bin/zookeeper-server-start.sh /data/config/zookeeper.properties
+    ports:
+    - "2181:2181"
+  kafka:
+    image: ezioruan/goim:v2
+    working_dir: /data/apps/kafka
+    volumes:
+     - ./config:/data/config
+    command: bin/kafka-server-start.sh /data/config/server.properties
+    links:
+     - zookeeper
+    ports:
+    - "9092:9092"
+  router:
+    image: ezioruan/goim:v2
+    working_dir: /data/apps/go
+    volumes:
+     - ./config:/data/config
+    command: bin/router -c /data/config/router.conf
+    ports:
+    - "7270:7270"
+  logic:
+    image: ezioruan/goim:v2
+    working_dir: /data/apps/go
+    volumes:
+     - ./config:/data/config
+    command: bin/logic -c /data/config/logic.conf
+    links:
+     - kafka
+     - router
+    ports:
+    - "7170:7170"
+    - "7172:7172"
+  comet:
+    image: ezioruan/goim:v2
+    working_dir: /data/apps/go
+    volumes:
+     - ./config:/data/config
+    command: bin/comet -c /data/config/comet.conf
+    links:
+     - logic
+    ports:
+    - "8080:8080"
+    - "8090:8090"
+    - "8092:8092"
+  job:
+    image: ezioruan/goim:v2
+    working_dir: /data/apps/go
+    volumes:
+     - ./config:/data/config
+    command: bin/job -c /data/config/job.conf
+    links:
+     - comet
+
